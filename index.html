@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FUT Match Tracker & Squad Cards</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Rajdhani & Outfit for authentic FUT aesthetic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Rajdhani:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #0b0e14;
+      color: #e2e8f0;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(56, 189, 248, 0.05) 0%, transparent 45%),
+        linear-gradient(180deg, #07090e 0%, #0d121d 100%);
+      background-attachment: fixed;
+    }
+
+    .fut-font {
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* Estilos específicos de Carta FUT Dorada Brillante */
+    .fut-card {
+      position: relative;
+      width: 175px;
+      height: 265px;
+      background: linear-gradient(135deg, #e5c07b 0%, #d4af37 35%, #92751f 70%, #d4af37 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 88%, 50% 100%, 0 88%);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.4);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      user-select: none;
+    }
+
+    .fut-card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 18px 30px rgba(212, 175, 55, 0.35);
+    }
+
+    .fut-card-inner {
+      position: absolute;
+      inset: 3px;
+      background: linear-gradient(180deg, #1d2027 0%, #0e1117 65%, #181d26 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 88%, 50% 100%, 0 88%);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Variantes de Carta Especial (MVP / TOTW) */
+    .fut-card.special-totw {
+      background: linear-gradient(135deg, #111 0%, #f59e0b 35%, #050505 70%, #d97706 100%);
+      animation: specialGlow 3s infinite alternate;
+    }
+
+    @keyframes specialGlow {
+      0% { box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3); }
+      100% { box-shadow: 0 15px 35px rgba(245, 158, 11, 0.75); }
+    }
+
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0e14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d4af37;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-100">
+
+  <!-- Barra de Navegación Superior -->
+  <header class="border-b border-amber-500/20 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 px-4 lg:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-xl fut-font">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-black uppercase tracking-wider fut-font bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
+            EA AMATEUR FC
+          </h1>
+          <p class="text-xs text-slate-400 tracking-wide">Acta de Partido & Cartas FUT</p>
+        </div>
+      </div>
+
+      <!-- Pestañas de Vista -->
+      <nav class="flex items-center gap-1 sm:gap-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+        <button id="nav-match-btn" onclick="switchView('match')" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center gap-2 bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20">
+          <i class="fa-solid fa-stopwatch"></i>
+          <span>En Directo</span>
+        </button>
+        <button id="nav-squad-btn" onclick="switchView('squad')" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition-all duration-200 flex items-center gap-2">
+          <i class="fa-solid fa-id-card"></i>
+          <span>Plantilla FUT</span>
+        </button>
+        <button id="nav-history-btn" onclick="switchView('history')" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition-all duration-200 flex items-center gap-2">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Historial</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    
+    <!-- VISTA 1: ACTA EN DIRECTO -->
+    <section id="view-match" class="space-y-6">
+      <!-- Marcador Principal Estilo Retransmisión -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-amber-500/30 p-5 sm:p-7 shadow-2xl">
+        <div class="absolute -right-16 -top-16 w-56 h-56 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-16 -bottom-16 w-56 h-56 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+          
+          <!-- Equipo Local (Nosotros) -->
+          <div class="flex items-center justify-between md:justify-start gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-lg shadow-amber-500/20">
+                <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-amber-400 text-2xl font-black">
+                  <i class="fa-solid fa-trophy"></i>
+                </div>
+              </div>
+              <div>
+                <input id="team-home-name" type="text" value="MI EQUIPO FC" class="bg-transparent text-lg sm:text-xl font-black tracking-wide fut-font uppercase text-white focus:outline-none focus:border-b border-amber-400 w-36 sm:w-44" title="Editar nombre">
+                <p class="text-xs text-amber-400/80 font-medium">Local (Nosotros)</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="changeScore('home', -1)" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white flex items-center justify-center font-bold text-lg active:scale-95 transition">
+                -
+              </button>
+              <span id="score-home" class="text-4xl sm:text-5xl font-black fut-font text-amber-400 w-12 text-center">0</span>
+              <button onclick="changeScore('home', 1)" class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 flex items-center justify-center font-bold text-lg active:scale-95 transition">
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Cronómetro Central y Controles -->
+          <div class="flex flex-col items-center justify-center order-first md:order-none py-2 border-y md:border-y-0 md:border-x border-slate-800">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" id="live-indicator"></span>
+              <span id="match-period-label" class="text-xs uppercase tracking-widest font-bold text-slate-400">1º Tiempo</span>
+            </div>
+            <div id="match-timer" class="text-4xl sm:text-5xl font-extrabold fut-font tracking-wider text-slate-100 mb-3">
+              00:00
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-timer-toggle" onclick="toggleTimer()" class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 active:scale-95">
+                <i class="fa-solid fa-play"></i> <span id="timer-btn-text">Iniciar</span>
+              </button>
+              <button onclick="nextPeriod()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider transition" title="Cambiar de parte">
+                <i class="fa-solid fa-forward-step"></i> Parte
+              </button>
+              <button onclick="resetMatchConfirm()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-400 font-bold text-xs transition" title="Reiniciar acta">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Equipo Rival -->
+          <div class="flex items-center justify-between md:justify-end gap-4">
+            <div class="flex items-center gap-2">
+              <button onclick="changeScore('away', -1)" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white flex items-center justify-center font-bold text-lg active:scale-95 transition">
+                -
+              </button>
+              <span id="score-away" class="text-4xl sm:text-5xl font-black fut-font text-slate-200 w-12 text-center">0</span>
+              <button onclick="changeScore('away', 1)" class="w-8 h-8 rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 flex items-center justify-center font-bold text-lg active:scale-95 transition">
+                +
+              </button>
+            </div>
+            <div class="flex items-center gap-3 text-right">
+              <div>
+                <input id="team-away-name" type="text" value="RIVALES CF" class="bg-transparent text-lg sm:text-xl font-black tracking-wide fut-font uppercase text-white text-right focus:outline-none focus:border-b border-sky-400 w-36 sm:w-44" title="Editar nombre">
+                <p class="text-xs text-sky-400/80 font-medium">Visitante (Rival)</p>
+              </div>
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-400 to-sky-600 p-0.5 shadow-lg shadow-sky-500/20">
+                <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-sky-400 text-2xl font-black">
+                  <i class="fa-solid fa-shield"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Zona de Acción: Plantilla en Directo & Registro de Jugadas -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Cartas para interactuar en directo (2 Columnas) -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <i class="fa-solid fa-users-viewfinder text-amber-400"></i>
+              Toca un jugador para registrar acción
+            </h2>
+            <span class="text-xs text-slate-500">Goles, asistencias, paradas o tarjetas</span>
+          </div>
+
+          <!-- Selector rápido de posición para filtrar -->
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            <button onclick="filterMatchPlayers('ALL')" class="pos-filter-btn px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-slate-950">Todos</button>
+            <button onclick="filterMatchPlayers('DEL')" class="pos-filter-btn px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:text-white">Delanteros</button>
+            <button onclick="filterMatchPlayers('MED')" class="pos-filter-btn px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:text-white">Medios</button>
+            <button onclick="filterMatchPlayers('DEF')" class="pos-filter-btn px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:text-white">Defensas</button>
+            <button onclick="filterMatchPlayers('POR')" class="pos-filter-btn px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 hover:text-white">Porteros</button>
+          </div>
+
+          <!-- Cuadrícula de Cartas Interactivas para el Partido -->
+          <div id="match-cards-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[580px] overflow-y-auto pr-1">
+            <!-- Rellenado dinámicamente con JS -->
+          </div>
+        </div>
+
+        <!-- Línea de Tiempo del Partido (Timeline) -->
+        <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 flex flex-col h-[630px]">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h3 class="font-bold text-sm tracking-wide uppercase text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-amber-400"></i>
+              Acta en Vivo
+            </h3>
+            <span id="event-counter" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-amber-400 font-mono">0 eventos</span>
+          </div>
+
+          <div id="events-timeline" class="flex-1 overflow-y-auto py-3 space-y-2.5 pr-1">
+            <!-- Eventos generados dinámicamente -->
+            <div id="empty-timeline-notice" class="h-full flex flex-col items-center justify-center text-center text-slate-500 py-12">
+              <i class="fa-solid fa-stopwatch text-3xl mb-2 opacity-40"></i>
+              <p class="text-xs">El acta está vacía.</p>
+              <p class="text-[11px] text-slate-600 mt-1">Pulsa en cualquier carta de jugador para anotar un gol, asistencia o tarjeta.</p>
+            </div>
+          </div>
+
+          <!-- Botón de Finalizar Partido -->
+          <div class="pt-3 border-t border-slate-800">
+            <button onclick="finishMatchModal()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-black text-sm uppercase tracking-wider hover:brightness-110 active:scale-98 transition shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-flag-checkered"></i>
+              Finalizar y Guardar Partido
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VISTA 2: GESTOR DE PLANTILLA Y CARTAS FUT -->
+    <section id="view-squad" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/70 p-5 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-2xl font-black fut-font uppercase tracking-wider text-amber-400">Colección de Cartas FUT</h2>
+          <p class="text-sm text-slate-400">Gestiona las estadísticas, posiciones y valoraciones de los jugadores de tu equipo.</p>
+        </div>
+        <button onclick="openPlayerModal()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-plus"></i> Crear Nueva Carta
+        </button>
+      </div>
+
+      <!-- Cuadrícula de Plantilla Completa -->
+      <div id="squad-cards-grid" class="flex flex-wrap gap-6 justify-center sm:justify-start items-center">
+        <!-- Generado dinámicamente con JS -->
+      </div>
+    </section>
+
+    <!-- VISTA 3: HISTORIAL DE PARTIDOS Y ESTADÍSTICAS -->
+    <section id="view-history" class="hidden space-y-6">
+      <div class="bg-slate-900/70 p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-black fut-font uppercase tracking-wider text-amber-400">Historial de Partidos</h2>
+          <p class="text-sm text-slate-400">Resultados, MVPs y actas guardadas en la memoria del equipo.</p>
+        </div>
+        <button onclick="clearHistoryConfirm()" class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition">
+          Borrar Historial
+        </button>
+      </div>
+
+      <div id="history-container" class="space-y-4">
+        <!-- Rellenado dinámicamente -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: REGISTRAR ACCIÓN DE JUGADOR (En Vivo) -->
+  <div id="action-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative">
+      <button onclick="closeModal('action-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-5">
+        <div id="modal-player-pos" class="w-9 h-9 rounded-lg bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center fut-font">
+          DEL
+        </div>
+        <div>
+          <h3 id="modal-player-name" class="font-black text-lg text-white fut-font tracking-wide">Nombre Jugador</h3>
+          <p class="text-xs text-amber-400/80 font-medium">Registrar evento en el minuto <span id="modal-event-minute" class="font-bold">0</span>'</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="recordEvent('goal')" class="p-3 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 hover:brightness-110 text-white font-bold text-xs uppercase flex flex-col items-center gap-1.5 transition">
+          <i class="fa-solid fa-futbol text-lg"></i>
+          <span>Gol (+1)</span>
+        </button>
+        <button onclick="recordEvent('assist')" class="p-3 rounded-xl bg-gradient-to-br from-sky-600 to-sky-800 hover:brightness-110 text-white font-bold text-xs uppercase flex flex-col items-center gap-1.5 transition">
+          <i class="fa-solid fa-handshake-angle text-lg"></i>
+          <span>Asistencia</span>
+        </button>
+        <button onclick="recordEvent('save')" class="p-3 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 hover:brightness-110 text-white font-bold text-xs uppercase flex flex-col items-center gap-1.5 transition">
+          <i class="fa-solid fa-hand text-lg"></i>
+          <span>Parada Clave</span>
+        </button>
+        <button onclick="recordEvent('yellow_card')" class="p-3 rounded-xl bg-gradient-to-br from-yellow-600 to-yellow-800 hover:brightness-110 text-white font-bold text-xs uppercase flex flex-col items-center gap-1.5 transition">
+          <i class="fa-solid fa-square text-yellow-300 text-lg"></i>
+          <span>Tarjeta Amarilla</span>
+        </button>
+        <button onclick="recordEvent('red_card')" class="p-3 rounded-xl bg-gradient-to-br from-rose-700 to-rose-900 hover:brightness-110 text-white font-bold text-xs uppercase flex flex-col items-center gap-1.5 transition">
+          <i class="fa-solid fa-square text-rose-300 text-lg"></i>
+          <span>Tarjeta Roja</span>
+        </button>
+        <button onclick="recordEvent('own_goal')" class="p-3 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 hover:brightness-110 text-slate-300 font-bold text-xs uppercase flex flex-col items-center gap-1.5 transition">
+          <i class="fa-solid fa-circle-exclamation text-amber-400 text-lg"></i>
+          <span>Gol Propia</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR CARTA JUGADOR -->
+  <div id="player-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('player-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 id="player-modal-title" class="text-xl font-black text-amber-400 fut-font tracking-wide uppercase mb-4">
+        Crear Nueva Carta FUT
+      </h3>
+
+      <form id="player-form" onsubmit="savePlayer(event)" class="space-y-4">
+        <input type="hidden" id="edit-player-id">
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nombre / Apodo</label>
+            <input required id="p-name" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400" placeholder="Ej: Dani Jr.">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Posición</label>
+            <select id="p-pos" onchange="adjustStatsLabels()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+              <option value="DEL">Delantero (DEL)</option>
+              <option value="MED">Centrocampista (MED)</option>
+              <option value="DEF">Defensa (DEF)</option>
+              <option value="POR">Portero (POR)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Dorsal</label>
+            <input id="p-number" type="number" min="1" max="99" value="10" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Media General (OVR)</label>
+            <input id="p-ovr" type="number" min="50" max="99" value="84" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-400 font-bold focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+
+        <!-- Atributos estilo FIFA -->
+        <p class="text-xs font-bold text-slate-400 uppercase pt-2 border-t border-slate-800">Atributos FIFA (0 - 99)</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label id="lbl-s1" class="block text-[11px] font-semibold text-slate-400">RIT (Ritmo)</label>
+            <input id="p-s1" type="number" min="10" max="99" value="85" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label id="lbl-s2" class="block text-[11px] font-semibold text-slate-400">TIR (Tiro)</label>
+            <input id="p-s2" type="number" min="10" max="99" value="82" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label id="lbl-s3" class="block text-[11px] font-semibold text-slate-400">PAS (Pase)</label>
+            <input id="p-s3" type="number" min="10" max="99" value="80" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label id="lbl-s4" class="block text-[11px] font-semibold text-slate-400">REG (Regate)</label>
+            <input id="p-s4" type="number" min="10" max="99" value="84" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label id="lbl-s5" class="block text-[11px] font-semibold text-slate-400">DEF (Defensa)</label>
+            <input id="p-s5" type="number" min="10" max="99" value="45" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label id="lbl-s6" class="block text-[11px] font-semibold text-slate-400">FIS (Físico)</label>
+            <input id="p-s6" type="number" min="10" max="99" value="78" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closeModal('player-modal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider">
+            Guardar Carta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: FINAL DEL PARTIDO Y MVP -->
+  <div id="finish-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 w-full max-w-md rounded-2xl p-6 shadow-2xl relative text-center">
+      <h3 class="text-2xl font-black text-amber-400 fut-font uppercase tracking-wider mb-2">¡Final del Partido!</h3>
+      <p class="text-xs text-slate-400 mb-5">Elige al MVP (Jugador del Partido) antes de guardar el acta oficial.</p>
+
+      <div class="mb-5 text-left">
+        <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Seleccionar Jugador MVP</label>
+        <select id="mvp-select" class="w-full bg-slate-800 border border-amber-500/40 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+          <!-- Opciones dinámicas -->
+        </select>
+      </div>
+
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-400 mb-6 flex justify-around">
+        <div><span class="text-amber-400 font-bold" id="fin-goals-count">0</span> Goles anotados</div>
+        <div><span class="text-sky-400 font-bold" id="fin-assists-count">0</span> Asistencias</div>
+        <div><span class="text-emerald-400 font-bold" id="fin-saves-count">0</span> Paradas</div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeModal('finish-modal')" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs uppercase hover:bg-slate-700">
+          Volver al Partido
+        </button>
+        <button onclick="saveMatchToHistory()" class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20">
+          Guardar Acta Oficial
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* DATOS INICIALES POR DEFECTO */
+    const DEFAULT_PLAYERS = [
+      { id: '1', name: 'Rubén', pos: 'POR', number: 1, ovr: 85, s1: 86, s2: 83, s3: 79, s4: 88, s5: 50, s6: 84 },
+      { id: '2', name: 'Marcos', pos: 'DEF', number: 4, ovr: 83, s1: 78, s2: 45, s3: 72, s4: 70, s5: 86, s6: 85 },
+      { id: '3', name: 'Javi', pos: 'DEF', number: 3, ovr: 81, s1: 82, s2: 50, s3: 75, s4: 74, s5: 82, s6: 80 },
+      { id: '4', name: 'Pablo', pos: 'MED', number: 8, ovr: 86, s1: 76, s2: 81, s3: 89, s4: 87, s5: 74, s6: 78 },
+      { id: '5', name: 'Álex', pos: 'MED', number: 6, ovr: 84, s1: 80, s2: 78, s3: 84, s4: 83, s5: 81, s6: 82 },
+      { id: '6', name: 'Nico', pos: 'DEL', number: 7, ovr: 88, s1: 91, s2: 87, s3: 82, s4: 89, s5: 38, s6: 76 },
+      { id: '7', name: 'David', pos: 'DEL', number: 9, ovr: 87, s1: 85, s2: 89, s3: 77, s4: 82, s5: 42, s6: 84 }
+    ];
+
+    /* ESTADO DE LA APLICACIÓN */
+    let players = [];
+    let matchEvents = [];
+    let matchScore = { home: 0, away: 0 };
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let isTimerRunning = false;
+    let currentPeriod = 1; // 1: 1ª Parte, 2: 2ª Parte
+    let selectedPlayerForAction = null;
+    let matchFilter = 'ALL';
+
+    /* INICIALIZACIÓN */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStorageData();
+      renderMatchCards();
+      renderSquadCards();
+      renderHistory();
+    });
+
+    function loadStorageData() {
+      try {
+        const storedPlayers = localStorage.getItem('fut_squad_players');
+        if (storedPlayers) {
+          players = JSON.parse(storedPlayers);
+        } else {
+          players = [...DEFAULT_PLAYERS];
+          savePlayersToStorage();
+        }
+      } catch (e) {
+        players = [...DEFAULT_PLAYERS];
+      }
+    }
+
+    function savePlayersToStorage() {
+      try {
+        localStorage.setItem('fut_squad_players', JSON.stringify(players));
+      } catch (e) {
+        console.error("Error al guardar plantilla", e);
+      }
+    }
+
+    /* GESTIÓN DEL CRONÓMETRO */
+    function toggleTimer() {
+      const btn = document.getElementById('btn-timer-toggle');
+      const btnText = document.getElementById('timer-btn-text');
+      const indicator = document.getElementById('live-indicator');
+
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btnText.innerText = 'Reanudar';
+        btn.classList.replace('bg-amber-500', 'bg-emerald-500');
+        btn.classList.replace('hover:bg-amber-400', 'hover:bg-emerald-400');
+        indicator.classList.remove('animate-pulse');
+      } else {
+        timerInterval = setInterval(() => {
+          timerSeconds++;
+          updateTimerDisplay();
+        }, 1000);
+        isTimerRunning = true;
+        btnText.innerText = 'Pausar';
+        btn.classList.replace('bg-emerald-500', 'bg-amber-500');
+        btn.classList.replace('hover:bg-emerald-400', 'hover:bg-amber-400');
+        indicator.classList.add('animate-pulse');
+      }
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timerSeconds / 60);
+      const seconds = timerSeconds % 60;
+      const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      document.getElementById('match-timer').innerText = formatted;
+    }
+
+    function getCurrentMinute() {
+      const m = Math.floor(timerSeconds / 60) + 1;
+      return m;
+    }
+
+    function nextPeriod() {
+      if (currentPeriod === 1) {
+        currentPeriod = 2;
+        document.getElementById('match-period-label').innerText = '2º Tiempo';
+        // Si no han llegado a 45 minutos (o 25 min si juegan futsal), podemos sincronizarlo
+        if (timerSeconds < 45 * 60) {
+          timerSeconds = 45 * 60;
+          updateTimerDisplay();
+        }
+      } else {
+        currentPeriod = 1;
+        document.getElementById('match-period-label').innerText = '1º Tiempo';
+      }
+    }
+
+    function changeScore(team, delta) {
+      if (team === 'home') {
+        matchScore.home = Math.max(0, matchScore.home + delta);
+        document.getElementById('score-home').innerText = matchScore.home;
+      } else {
+        matchScore.away = Math.max(0, matchScore.away + delta);
+        document.getElementById('score-away').innerText = matchScore.away;
+      }
+    }
+
+    function resetMatchConfirm() {
+      if (confirm('¿Seguro que deseas reiniciar el marcador, cronómetro y los eventos del partido?')) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSeconds = 0;
+        currentPeriod = 1;
+        updateTimerDisplay();
+        document.getElementById('timer-btn-text').innerText = 'Iniciar';
+        document.getElementById('match-period-label').innerText = '1º Tiempo';
+        matchScore = { home: 0, away: 0 };
+        document.getElementById('score-home').innerText = 0;
+        document.getElementById('score-away').innerText = 0;
+        matchEvents = [];
+        renderEventsTimeline();
+      }
+    }
+
+    /* REGISTRO DE EVENTOS DEL JUGADOR */
+    function openActionModal(playerId) {
+      const p = players.find(x => x.id === playerId);
+      if (!p) return;
+      selectedPlayerForAction = p;
+      document.getElementById('modal-player-name').innerText = p.name;
+      document.getElementById('modal-player-pos').innerText = p.pos;
+      document.getElementById('modal-event-minute').innerText = getCurrentMinute();
+      document.getElementById('action-modal').classList.remove('hidden');
+    }
+
+    function recordEvent(type) {
+      if (!selectedPlayerForAction) return;
+
+      const event = {
+        id: Date.now().toString(),
+        type: type,
+        playerId: selectedPlayerForAction.id,
+        playerName: selectedPlayerForAction.name,
+        playerPos: selectedPlayerForAction.pos,
+        minute: getCurrentMinute(),
+        period: currentPeriod
+      };
+
+      matchEvents.unshift(event);
+
+      // Si es gol, sumamos al marcador automáticamente
+      if (type === 'goal') {
+        changeScore('home', 1);
+      } else if (type === 'own_goal') {
+        changeScore('away', 1);
+      }
+
+      renderEventsTimeline();
+      closeModal('action-modal');
+    }
+
+    function removeEvent(eventId) {
+      const ev = matchEvents.find(e => e.id === eventId);
+      if (ev) {
+        if (ev.type === 'goal') changeScore('home', -1);
+        if (ev.type === 'own_goal') changeScore('away', -1);
+        matchEvents = matchEvents.filter(e => e.id !== eventId);
+        renderEventsTimeline();
+      }
+    }
+
+    function renderEventsTimeline() {
+      const container = document.getElementById('events-timeline');
+      document.getElementById('event-counter').innerText = `${matchEvents.length} eventos`;
+
+      if (matchEvents.length === 0) {
+        container.innerHTML = `
+          <div id="empty-timeline-notice" class="h-full flex flex-col items-center justify-center text-center text-slate-500 py-12">
+            <i class="fa-solid fa-stopwatch text-3xl mb-2 opacity-40"></i>
+            <p class="text-xs">El acta está vacía.</p>
+            <p class="text-[11px] text-slate-600 mt-1">Pulsa en cualquier carta de jugador para anotar un gol, asistencia o tarjeta.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const iconMap = {
+        goal: { icon: 'fa-futbol', color: 'text-emerald-400', label: 'GOL' },
+        assist: { icon: 'fa-handshake-angle', color: 'text-sky-400', label: 'Asistencia' },
+        save: { icon: 'fa-hand', color: 'text-indigo-400', label: 'Parada Clave' },
+        yellow_card: { icon: 'fa-square', color: 'text-yellow-400', label: 'Tarjeta Amarilla' },
+        red_card: { icon: 'fa-square', color: 'text-rose-500', label: 'Tarjeta Roja' },
+        own_goal: { icon: 'fa-circle-exclamation', color: 'text-rose-400', label: 'Gol en Contra' }
+      };
+
+      container.innerHTML = matchEvents.map(ev => {
+        const conf = iconMap[ev.type] || { icon: 'fa-circle', color: 'text-slate-400', label: 'Acción' };
+        return `
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-black fut-font px-2 py-0.5 rounded bg-slate-800 text-amber-400">${ev.minute}'</span>
+              <i class="fa-solid ${conf.icon} ${conf.color}"></i>
+              <div>
+                <p class="text-xs font-bold text-white leading-none">${ev.playerName}</p>
+                <span class="text-[10px] text-slate-400">${conf.label}</span>
+              </div>
+            </div>
+            <button onclick="removeEvent('${ev.id}')" class="text-slate-500 hover:text-rose-400 text-xs px-2 py-1" title="Eliminar del acta">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* RENDERIZADO DE CARTAS FUT */
+    function generateFutCardHTML(p, isInteractive = false) {
+      const statsLabels = p.pos === 'POR' 
+        ? ['EST', 'PAR', 'SAQ', 'REF', 'VEL', 'POS']
+        : ['RIT', 'TIR', 'PAS', 'REG', 'DEF', 'FIS'];
+
+      return `
+        <div class="fut-card cursor-pointer group" onclick="${isInteractive ? `openActionModal('${p.id}')` : `editPlayer('${p.id}')`}">
+          <div class="fut-card-inner p-3 flex flex-col justify-between">
+            
+            <!-- Parte Superior: OVR, Posición y Escudo -->
+            <div class="flex justify-between items-start">
+              <div class="flex flex-col items-center">
+                <span class="text-2xl font-black fut-font leading-none text-amber-200">${p.ovr}</span>
+                <span class="text-[11px] font-bold fut-font text-amber-400 uppercase tracking-tighter">${p.pos}</span>
+                <span class="text-[9px] text-slate-400 font-mono mt-0.5">#${p.number}</span>
+              </div>
+              <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-600/30 to-slate-800 flex items-center justify-center border border-amber-400/40 shadow-inner">
+                <span class="fut-font font-black text-xl text-amber-300">${p.name.substring(0, 2).toUpperCase()}</span>
+              </div>
+            </div>
+
+            <!-- Nombre de Jugador -->
+            <div class="text-center my-1">
+              <p class="fut-font font-black text-sm uppercase tracking-wider text-slate-100 truncate">${p.name}</p>
+              <div class="w-12 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent mx-auto mt-0.5"></div>
+            </div>
+
+            <!-- Atributos Hexagonales / Matriz FIFA -->
+            <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] fut-font font-bold px-1.5 py-1 bg-black/40 rounded-lg border border-amber-500/20">
+              <div class="flex justify-between">
+                <span class="text-slate-400">${statsLabels[0]}</span>
+                <span class="text-amber-300">${p.s1}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">${statsLabels[3]}</span>
+                <span class="text-amber-300">${p.s4}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">${statsLabels[1]}</span>
+                <span class="text-amber-300">${p.s2}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">${statsLabels[4]}</span>
+                <span class="text-amber-300">${p.s5}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">${statsLabels[2]}</span>
+                <span class="text-amber-300">${p.s3}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">${statsLabels[5]}</span>
+                <span class="text-amber-300">${p.s6}</span>
+              </div>
+            </div>
+
+            <!-- Pie de carta con toque brillante -->
+            <div class="text-center text-[9px] text-amber-400/60 font-semibold uppercase tracking-widest pb-1">
+              EA AMATEUR
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMatchCards() {
+      const container = document.getElementById('match-cards-container');
+      const filtered = matchFilter === 'ALL' ? players : players.filter(p => p.pos === matchFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="col-span-full text-center text-xs text-slate-500 py-8">No hay jugadores en esta demarcación.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => generateFutCardHTML(p, true)).join('');
+    }
+
+    function filterMatchPlayers(pos) {
+      matchFilter = pos;
+      document.querySelectorAll('.pos-filter-btn').forEach(btn => {
+        btn.classList.replace('bg-amber-500', 'bg-slate-800');
+        btn.classList.replace('text-slate-950', 'text-slate-300');
+      });
+      event.target.classList.replace('bg-slate-800', 'bg-amber-500');
+      event.target.classList.replace('text-slate-300', 'text-slate-950');
+      renderMatchCards();
+    }
+
+    function renderSquadCards() {
+      const container = document.getElementById('squad-cards-grid');
+      container.innerHTML = players.map(p => `
+        <div class="flex flex-col items-center gap-2">
+          ${generateFutCardHTML(p, false)}
+          <div class="flex items-center gap-2">
+            <button onclick="editPlayer('${p.id}')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 font-semibold">
+              <i class="fa-solid fa-pen-to-square"></i> Editar
+            </button>
+            <button onclick="deletePlayer('${p.id}')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-red-500/20 text-xs text-red-400 font-semibold">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    /* CREAR / EDITAR JUGADORES */
+    function adjustStatsLabels() {
+      const pos = document.getElementById('p-pos').value;
+      if (pos === 'POR') {
+        document.getElementById('lbl-s1').innerText = 'EST (Estirada)';
+        document.getElementById('lbl-s2').innerText = 'PAR (Parada)';
+        document.getElementById('lbl-s3').innerText = 'SAQ (Saque)';
+        document.getElementById('lbl-s4').innerText = 'REF (Reflejos)';
+        document.getElementById('lbl-s5').innerText = 'VEL (Velocidad)';
+        document.getElementById('lbl-s6').innerText = 'POS (Posición)';
+      } else {
+        document.getElementById('lbl-s1').innerText = 'RIT (Ritmo)';
+        document.getElementById('lbl-s2').innerText = 'TIR (Tiro)';
+        document.getElementById('lbl-s3').innerText = 'PAS (Pase)';
+        document.getElementById('lbl-s4').innerText = 'REG (Regate)';
+        document.getElementById('lbl-s5').innerText = 'DEF (Defensa)';
+        document.getElementById('lbl-s6').innerText = 'FIS (Físico)';
+      }
+    }
+
+    function openPlayerModal() {
+      document.getElementById('player-form').reset();
+      document.getElementById('edit-player-id').value = '';
+      document.getElementById('player-modal-title').innerText = 'Crear Nueva Carta FUT';
+      adjustStatsLabels();
+      document.getElementById('player-modal').classList.remove('hidden');
+    }
+
+    function editPlayer(id) {
+      const p = players.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('edit-player-id').value = p.id;
+      document.getElementById('p-name').value = p.name;
+      document.getElementById('p-pos').value = p.pos;
+      document.getElementById('p-number').value = p.number;
+      document.getElementById('p-ovr').value = p.ovr;
+      document.getElementById('p-s1').value = p.s1;
+      document.getElementById('p-s2').value = p.s2;
+      document.getElementById('p-s3').value = p.s3;
+      document.getElementById('p-s4').value = p.s4;
+      document.getElementById('p-s5').value = p.s5;
+      document.getElementById('p-s6').value = p.s6;
+      document.getElementById('player-modal-title').innerText = 'Editar Carta FUT';
+      adjustStatsLabels();
+      document.getElementById('player-modal').classList.remove('hidden');
+    }
+
+    function savePlayer(e) {
+      e.preventDefault();
+      const editId = document.getElementById('edit-player-id').value;
+      const playerData = {
+        id: editId || Date.now().toString(),
+        name: document.getElementById('p-name').value.trim(),
+        pos: document.getElementById('p-pos').value,
+        number: parseInt(document.getElementById('p-number').value) || 10,
+        ovr: parseInt(document.getElementById('p-ovr').value) || 80,
+        s1: parseInt(document.getElementById('p-s1').value) || 75,
+        s2: parseInt(document.getElementById('p-s2').value) || 75,
+        s3: parseInt(document.getElementById('p-s3').value) || 75,
+        s4: parseInt(document.getElementById('p-s4').value) || 75,
+        s5: parseInt(document.getElementById('p-s5').value) || 75,
+        s6: parseInt(document.getElementById('p-s6').value) || 75
+      };
+
+      if (editId) {
+        const index = players.findIndex(x => x.id === editId);
+        if (index !== -1) players[index] = playerData;
+      } else {
+        players.push(playerData);
+      }
+
+      savePlayersToStorage();
+      renderMatchCards();
+      renderSquadCards();
+      closeModal('player-modal');
+    }
+
+    function deletePlayer(id) {
+      if (confirm('¿Eliminar esta carta de la plantilla?')) {
+        players = players.filter(x => x.id !== id);
+        savePlayersToStorage();
+        renderMatchCards();
+        renderSquadCards();
+      }
+    }
+
+    /* FINALIZACIÓN Y GUARDADO DE PARTIDO EN HISTORIAL */
+    function finishMatchModal() {
+      if (isTimerRunning) toggleTimer(); // Pausamos cronómetro
+
+      const goalsCount = matchEvents.filter(e => e.type === 'goal').length;
+      const assistsCount = matchEvents.filter(e => e.type === 'assist').length;
+      const savesCount = matchEvents.filter(e => e.type === 'save').length;
+
+      document.getElementById('fin-goals-count').innerText = goalsCount;
+      document.getElementById('fin-assists-count').innerText = assistsCount;
+      document.getElementById('fin-saves-count').innerText = savesCount;
+
+      const mvpSelect = document.getElementById('mvp-select');
+      mvpSelect.innerHTML = players.map(p => {
+        const pGoals = matchEvents.filter(e => e.type === 'goal' && e.playerId === p.id).length;
+        const pAssists = matchEvents.filter(e => e.type === 'assist' && e.playerId === p.id).length;
+        return `<option value="${p.id}">${p.name} (${p.pos}) — ${pGoals} Goles / ${pAssists} Asist.</option>`;
+      }).join('');
+
+      document.getElementById('finish-modal').classList.remove('hidden');
+    }
+
+    function saveMatchToHistory() {
+      const mvpId = document.getElementById('mvp-select').value;
+      const mvpPlayer = players.find(p => p.id === mvpId) || players[0];
+
+      const matchRecord = {
+        id: Date.now().toString(),
+        date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+        homeTeam: document.getElementById('team-home-name').value,
+        awayTeam: document.getElementById('team-away-name').value,
+        scoreHome: matchScore.home,
+        scoreAway: matchScore.away,
+        mvp: mvpPlayer,
+        events: [...matchEvents]
+      };
+
+      try {
+        const history = JSON.parse(localStorage.getItem('fut_match_history') || '[]');
+        history.unshift(matchRecord);
+        localStorage.setItem('fut_match_history', JSON.stringify(history));
+      } catch (e) {
+        console.error("Error al guardar historial", e);
+      }
+
+      closeModal('finish-modal');
+      renderHistory();
+      switchView('history');
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('history-container');
+      let history = [];
+      try {
+        history = JSON.parse(localStorage.getItem('fut_match_history') || '[]');
+      } catch (e) {
+        history = [];
+      }
+
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-16 text-slate-500 bg-slate-900/50 rounded-2xl border border-slate-800">
+            <i class="fa-solid fa-trophy text-4xl mb-3 opacity-40"></i>
+            <p class="text-sm font-semibold">No hay partidos registrados aún.</p>
+            <p class="text-xs text-slate-600 mt-1">Completa y guarda tu primer partido desde el modo En Directo.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = history.map(item => `
+        <div class="bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-5 transition flex flex-col md:flex-row items-center justify-between gap-5">
+          <div>
+            <div class="flex items-center gap-2 text-xs text-amber-400 font-semibold mb-1">
+              <i class="fa-regular fa-calendar"></i>
+              <span>${item.date}</span>
+            </div>
+            <div class="flex items-center gap-4 text-lg font-black fut-font">
+              <span class="text-slate-100">${item.homeTeam}</span>
+              <span class="px-3 py-1 rounded bg-slate-950 text-amber-400 border border-slate-800">${item.scoreHome} - ${item.scoreAway}</span>
+              <span class="text-slate-400">${item.awayTeam}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+              ${item.events.filter(e => e.type === 'goal').length} goles • ${item.events.length} acciones registradas
+            </p>
+          </div>
+
+          <!-- Carta MVP Destacada TOTW -->
+          <div class="flex items-center gap-3 bg-slate-950/80 px-4 py-3 rounded-xl border border-amber-500/30">
+            <div class="text-right">
+              <span class="text-[10px] font-black uppercase text-amber-400 tracking-wider block">MVP del Partido</span>
+              <span class="text-sm font-bold text-white">${item.mvp?.name || 'Destacado'}</span>
+              <span class="text-xs text-slate-400 block">${item.mvp?.pos || 'MED'} • OVR ${item.mvp?.ovr || 85}</span>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-600 flex items-center justify-center text-slate-950 font-black text-sm shadow-md shadow-amber-500/30">
+              <i class="fa-solid fa-star"></i>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function clearHistoryConfirm() {
+      if (confirm('¿Deseas vaciar todo el historial de partidos registrados?')) {
+        localStorage.removeItem('fut_match_history');
+        renderHistory();
+      }
+    }
+
+    /* PESTAÑAS Y MODALES */
+    function switchView(viewName) {
+      document.getElementById('view-match').classList.toggle('hidden', viewName !== 'match');
+      document.getElementById('view-squad').classList.toggle('hidden', viewName !== 'squad');
+      document.getElementById('view-history').classList.toggle('hidden', viewName !== 'history');
+
+      const tabs = [
+        { id: 'nav-match-btn', active: viewName === 'match' },
+        { id: 'nav-squad-btn', active: viewName === 'squad' },
+        { id: 'nav-history-btn', active: viewName === 'history' }
+      ];
+
+      tabs.forEach(t => {
+        const el = document.getElementById(t.id);
+        if (t.active) {
+          el.className = 'px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center gap-2 bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20';
+        } else {
+          el.className = 'px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-400 hover:text-white transition-all duration-200 flex items-center gap-2';
+        }
+      });
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
